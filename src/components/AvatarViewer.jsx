@@ -1,152 +1,138 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-// Three.js viewer: sphere-based head with texture projection, lights, orbit controls
-export default function AvatarViewer({ textureDataUrl, landmarks, config, onExport }) {
+export default function AvatarViewer({ imageDataUrl, landmarks, config, onReadyForExport }) {
   const mountRef = useRef(null);
-  const [ready, setReady] = useState(false);
-  const sceneRef = useRef(null);
   const rendererRef = useRef(null);
+  const sceneRef = useRef(null);
   const cameraRef = useRef(null);
-  const headRef = useRef(null);
+  const avatarRef = useRef(null);
+  const controlsRef = useRef(null);
+  const texRef = useRef(null);
 
   useEffect(() => {
     const mount = mountRef.current;
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0b0b0f');
+    if (!mount) return;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#f8fafc');
+    sceneRef.current = scene;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(mount.clientWidth, mount.clientHeight);
     renderer.shadowMap.enabled = true;
     mount.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 100);
-    camera.position.set(0, 1.4, 2.2);
+    camera.position.set(0, 1.4, 3);
+    cameraRef.current = camera;
 
-    // lighting
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x222244, 1.0);
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    hemi.position.set(0, 1, 0);
     scene.add(hemi);
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(3, 5, 3);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+    dir.position.set(3, 5, 5);
     dir.castShadow = true;
+    dir.shadow.mapSize.set(1024, 1024);
     scene.add(dir);
+
+    const floorGeo = new THREE.PlaneGeometry(10, 10);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.95 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.target.set(0, 1.4, 0);
+    controlsRef.current = controls;
 
-    // ground
-    const groundGeo = new THREE.PlaneGeometry(10, 10);
-    const groundMat = new THREE.MeshStandardMaterial({ color: '#0f1115', roughness: 0.9, metalness: 0.1 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // create a head-like sphere
-    const geo = new THREE.SphereGeometry(0.45, 128, 128);
-    geo.scale(0.95, 1.1, 1.0); // slight elongation
-    const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(config?.skin || '#e0c1a0') });
-    const head = new THREE.Mesh(geo, mat);
-    head.position.set(0, 1.6, 0);
+    // Simple head primitive as fallback before GLB is added
+    const headGeo = new THREE.SphereGeometry(0.6, 64, 64);
+    const headMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(config?.skinTone || '#f5d1b8'), roughness: 0.6, metalness: 0.0 });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.set(0, 1.4, 0);
     head.castShadow = true;
-    head.receiveShadow = true;
     scene.add(head);
-    headRef.current = head;
-
-    sceneRef.current = scene;
-    rendererRef.current = renderer;
-    cameraRef.current = camera;
+    avatarRef.current = head;
 
     const onResize = () => {
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
+      if (!mount) return;
+      const { clientWidth, clientHeight } = mount;
+      renderer.setSize(clientWidth, clientHeight);
+      camera.aspect = clientWidth / clientHeight;
       camera.updateProjectionMatrix();
     };
     window.addEventListener('resize', onResize);
 
+    let raf;
     const animate = () => {
+      raf = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
-      requestAnimationFrame(animate);
     };
     animate();
-    setReady(true);
+
+    if (onReadyForExport) onReadyForExport(() => renderer.domElement.toDataURL('image/png'));
 
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      controls.dispose();
+      if (texRef.current) texRef.current.dispose();
       renderer.dispose();
       mount.removeChild(renderer.domElement);
-      scene.traverse((obj) => {
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
-          else obj.material.dispose();
-        }
-      });
     };
   }, []);
 
-  // apply skin color updates
+  // Apply texture from captured/ uploaded image
   useEffect(() => {
-    if (!headRef.current) return;
-    const mat = headRef.current.material;
-    if (mat && mat.color && config?.skin) {
-      mat.color = new THREE.Color(config.skin);
-      mat.needsUpdate = true;
-    }
-  }, [config?.skin]);
+    if (!imageDataUrl || !avatarRef.current) return;
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      imageDataUrl,
+      (tex) => {
+        tex.flipY = false;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        texRef.current = tex;
+        const mat = avatarRef.current.material;
+        mat.map = tex;
+        mat.needsUpdate = true;
+      },
+      undefined,
+      () => {}
+    );
+  }, [imageDataUrl]);
 
-  // apply face texture
+  // Use landmarks to estimate simple head orientation
   useEffect(() => {
-    if (!textureDataUrl || !headRef.current) return;
-    const tex = new THREE.TextureLoader().load(textureDataUrl);
-    tex.flipY = false;
-    tex.colorSpace = THREE.SRGBColorSpace;
+    if (!landmarks || !avatarRef.current) return;
+    const L = landmarks[33]; // left eye outer
+    const R = landmarks[263]; // right eye outer
+    const N = landmarks[1]; // nose tip
+    if (!L || !R || !N) return;
 
-    const mat = headRef.current.material;
-    mat.map = tex;
-    mat.needsUpdate = true;
-  }, [textureDataUrl]);
+    const yaw = Math.atan2(R.x - L.x, R.y - L.y);
+    const pitch = (N.y - (L.y + R.y) / 2) * 2.0;
 
-  // minimal orientation from landmarks
-  useEffect(() => {
-    if (!landmarks || !headRef.current) return;
-    const leftEyeIdx = 33; // outer left eye
-    const rightEyeIdx = 263; // outer right eye
-    const noseIdx = 1; // nose tip approx
-    const l = landmarks[leftEyeIdx];
-    const r = landmarks[rightEyeIdx];
-    const n = landmarks[noseIdx];
-    if (!l || !r || !n) return;
-
-    const dx = r.x - l.x;
-    const dy = (l.y + r.y) / 2 - n.y;
-    const yaw = Math.atan2(dx, 0.08);
-    const pitch = Math.atan2(dy, 0.06);
-
-    headRef.current.rotation.set(pitch, yaw, 0);
+    avatarRef.current.rotation.set(pitch, -yaw, 0);
   }, [landmarks]);
 
-  const handleExport = () => {
-    // export canvas render as image for now; GLB export would need GLTFExporter (adds size)
-    const renderer = rendererRef.current;
-    if (!renderer) return;
-    const a = document.createElement('a');
-    a.href = renderer.domElement.toDataURL('image/png');
-    a.download = 'avatar.png';
-    a.click();
-  };
-
+  // React to config changes
   useEffect(() => {
-    if (onExport) onExport.current = handleExport;
-  }, [onExport, textureDataUrl, config]);
+    if (!avatarRef.current || !config) return;
+    if (config.skinTone) {
+      avatarRef.current.material.color = new THREE.Color(config.skinTone);
+    }
+  }, [config]);
 
   return (
-    <div ref={mountRef} className="w-full h-full rounded-xl overflow-hidden bg-[#0b0b10] ring-1 ring-white/10" />
+    <div ref={mountRef} className="w-full h-full rounded-xl bg-white shadow-inner" />
   );
 }

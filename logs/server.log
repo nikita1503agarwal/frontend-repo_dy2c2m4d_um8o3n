@@ -3,51 +3,8 @@
 > vite
 
 
-  VITE v5.4.20  ready in 264 ms
+  VITE v5.4.20  ready in 257 ms
 
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.20.18.35:3000/
-10:49:42 AM [vite] Pre-transform error: Failed to resolve import "@mediapipe/face_mesh" from "src/components/CameraPanel.jsx". Does the file exist?
-10:49:42 AM [vite] Pre-transform error: Failed to resolve import "three" from "src/components/AvatarViewer.jsx". Does the file exist?
-10:49:43 AM [vite] ✨ new dependencies optimized: lucide-react
-10:49:43 AM [vite] ✨ optimized dependencies changed. reloading
-10:49:43 AM [vite] Pre-transform error: Failed to resolve import "three" from "src/components/AvatarViewer.jsx". Does the file exist?
-10:49:43 AM [vite] Pre-transform error: Failed to resolve import "@mediapipe/face_mesh" from "src/components/CameraPanel.jsx". Does the file exist?
-10:49:47 AM [vite] Internal server error: Failed to resolve import "@mediapipe/face_mesh" from "src/components/CameraPanel.jsx". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /home/workspace/src/components/CameraPanel.jsx:3:25
-  2  |  import React, { useEffect, useRef, useState } from "react";
-  3  |  import { Files, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
-  4  |  import { FaceMesh } from "@mediapipe/face_mesh";
-     |                            ^
-  5  |  export default function CameraPanel({ onImageReady, onLandmarks }) {
-  6  |    const videoRef = useRef(null);
-      at TransformPluginContext._formatError (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49258:41)
-      at TransformPluginContext.error (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49253:16)
-      at normalizeUrl (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64306:23)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-      at async file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64438:39
-      at async Promise.all (index 3)
-      at async TransformPluginContext.transform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64365:7)
-      at async PluginContainer.transform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49099:18)
-      at async loadAndTransform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:51977:27)
-      at async viteTransformMiddleware (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:62105:24)
-10:49:47 AM [vite] Internal server error: Failed to resolve import "three" from "src/components/AvatarViewer.jsx". Does the file exist?
-  Plugin: vite:import-analysis
-  File: /home/workspace/src/components/AvatarViewer.jsx:2:23
-  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
-  2  |  import React, { useEffect, useRef, useState } from "react";
-  3  |  import * as THREE from "three";
-     |                          ^
-  4  |  import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-  5  |  export default function AvatarViewer({ textureDataUrl, landmarks, config, onExport }) {
-      at TransformPluginContext._formatError (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49258:41)
-      at TransformPluginContext.error (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49253:16)
-      at normalizeUrl (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64306:23)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-      at async file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64438:39
-      at async Promise.all (index 2)
-      at async TransformPluginContext.transform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:64365:7)
-      at async PluginContainer.transform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:49099:18)
-      at async loadAndTransform (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:51977:27)
-      at async viteTransformMiddleware (file:///home/workspace/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:62105:24)
+10:53:20 AM [vite] Pre-transform error: Failed to resolve import "three" from "src/components/AvatarViewer.jsx". Does the file exist?
